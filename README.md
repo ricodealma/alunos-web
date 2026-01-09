@@ -56,23 +56,32 @@ docker run -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://localhost:5000/api alunos-
 ```
 
 ### Opção 2: Docker Compose (recomendado)
-
-Na raiz do projeto:
+Este repositório contém um `docker-compose.yml` que sobe o ambiente completo (Banco + API + Frontend) usando imagens pré-compiladas.
 
 ```bash
 # Iniciar todos os serviços
-docker-compose up --build
-
-# Executar em background
 docker-compose up -d
-
-# Parar serviços
-docker-compose down
 ```
 
-## 🔑 Credenciais de Teste
+Isso subirá:
+- **Frontend**: http://localhost:3000
+- **API**: http://localhost:5000/swagger
+- **Banco**: Porta 5432
 
-**Importante**: Configure as credenciais no backend primeiro.
+### Executar em Desenvolvimento (Local)
+
+1. Suba apenas o backend caso necessário, ou use o docker-compose e pare o container `alunos-web`:
+   ```bash
+   docker-compose up -d
+   docker stop alunos-web
+   ```
+2. Instale dependências e rode o frontend localmente:
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+## 🏗️ Build de Produção
 
 Exemplo de credenciais:
 - Email: `admin@test.com`
