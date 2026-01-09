@@ -26,6 +26,8 @@ api.interceptors.request.use(
     }
 );
 
+import { redirectToLogin } from '@/lib/authUtils';
+
 // Response interceptor: Handle 401 errors (token expired/invalid)
 api.interceptors.response.use(
     (response) => response,
@@ -35,9 +37,7 @@ api.interceptors.response.use(
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('userEmail');
-                if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-                    window.location.href = '/login';
-                }
+                redirectToLogin();
             }
         }
         return Promise.reject(error);
