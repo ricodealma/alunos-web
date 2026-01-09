@@ -3,28 +3,33 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import api from '@/services/api';
-import { Student, PaginatedResponse } from '@/types';
+import { Student } from '@/types';
 import StudentList from '@/components/StudentList';
 import StudentForm from '@/components/StudentForm';
 import DeleteConfirmation from '@/components/DeleteConfirmation';
 import Pagination from '@/components/Pagination';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useStudents, useDeleteStudent } from '@/hooks/useStudents';
 
 export default function StudentsPage() {
     const router = useRouter();
     const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
 
-    const [students, setStudents] = useState<Student[]>([]);
-    const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [error, setError] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
-    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const {
+        data: studentsData,
+        isLoading: studentsLoading,
+        error: fetchError,
+        refetch
+    } = useStudents(currentPage);
+
+    const deleteMutation = useDeleteStudent();
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -33,30 +38,6 @@ export default function StudentsPage() {
         }
     }, [isAuthenticated, authLoading, router]);
 
-    // Fetch students
-    useEffect(() => {
-        if (isAuthenticated) {
-            fetchStudents(currentPage);
-        }
-    }, [currentPage, isAuthenticated]);
-
-    const fetchStudents = async (page: number) => {
-        setLoading(true);
-        setError('');
-
-        try {
-            const response = await api.get<PaginatedResponse<Student>>(`/v1/alunos?page=${page}&size=10`);
-            setStudents(response.data.data);
-            setTotalPages(response.data.totalPages);
-        } catch (err) {
-            const error = err as { response?: { data?: { message?: string } } };
-            const errorMessage = error.response?.data?.message || 'Erro ao carregar alunos';
-            setError(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
     };
@@ -64,7 +45,6 @@ export default function StudentsPage() {
     const handleAddSuccess = () => {
         setShowAddForm(false);
         setSuccessMessage('Aluno adicionado com sucesso!');
-        fetchStudents(1);
         setCurrentPage(1);
         setTimeout(() => setSuccessMessage(''), 3000);
     };
@@ -77,23 +57,21 @@ export default function StudentsPage() {
     const handleDeleteConfirm = async () => {
         if (!studentToDelete) return;
 
-        setDeleteLoading(true);
         setError('');
 
         try {
-            await api.delete(`/v1/alunos/${studentToDelete.id}`);
+            await deleteMutation.mutateAsync(studentToDelete.id);
             setShowDeleteModal(false);
             setStudentToDelete(null);
             setSuccessMessage('Aluno excluído com sucesso!');
-            fetchStudents(currentPage);
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (err) {
-            const error = err as { response?: { status? : number, data?: { message?: string } } };
+            const error = err as { response?: { status?: number, data?: { message?: string } } };
             let errorMessage = 'Erro ao excluir aluno';
 
             if (error.response?.status === 404) {
                 errorMessage = 'Aluno não encontrado. A lista foi atualizada.';
-                fetchStudents(currentPage);
+                refetch();
             } else {
                 errorMessage = error.response?.data?.message || errorMessage;
             }
@@ -101,8 +79,6 @@ export default function StudentsPage() {
             setError(errorMessage);
             setShowDeleteModal(false);
             setStudentToDelete(null);
-        } finally {
-            setDeleteLoading(false);
         }
     };
 
@@ -122,6 +98,9 @@ export default function StudentsPage() {
     if (!isAuthenticated) {
         return null;
     }
+
+    const students = studentsData?.data || [];
+    const totalPages = studentsData?.totalPages || 1;
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -180,11 +159,11 @@ export default function StudentsPage() {
                         </button>
                     </div>
 
-                    {error && (
+                    {(error || fetchError) && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-                            {error}
+                            {error || (fetchError as any)?.response?.data?.message || 'Erro ao carregar alunos'}
                             <button
-                                onClick={() => fetchStudents(currentPage)}
+                                onClick={() => refetch()}
                                 className="ml-2 underline"
                             >
                                 Tentar novamente
@@ -194,11 +173,11 @@ export default function StudentsPage() {
 
                     <StudentList
                         students={students}
-                        loading={loading}
+                        loading={studentsLoading}
                         onDelete={handleDelete}
                     />
 
-                    {!loading && students.length > 0 && totalPages > 1 && (
+                    {!studentsLoading && students.length > 0 && totalPages > 1 && (
                         <Pagination
                             currentPage={currentPage}
                             totalPages={totalPages}
@@ -214,7 +193,7 @@ export default function StudentsPage() {
                 studentName={studentToDelete?.nome || ''}
                 onConfirm={handleDeleteConfirm}
                 onCancel={handleDeleteCancel}
-                loading={deleteLoading}
+                loading={deleteMutation.isPending}
             />
         </div>
     );

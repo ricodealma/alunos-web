@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import api from '@/services/api';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useCreateStudent } from '@/hooks/useStudents';
 
 const studentSchema = z.object({
     nome: z.string().min(1, 'Nome é obrigatório'),
@@ -20,8 +20,8 @@ interface StudentFormProps {
 }
 
 export default function StudentForm({ onSuccess, onCancel }: StudentFormProps) {
-    const [loading, setLoading] = useState(false);
     const [generalError, setGeneralError] = useState('');
+    const createMutation = useCreateStudent();
 
     const {
         register,
@@ -33,11 +33,10 @@ export default function StudentForm({ onSuccess, onCancel }: StudentFormProps) {
     });
 
     const onSubmit = async (data: StudentSchema) => {
-        setLoading(true);
         setGeneralError('');
 
         try {
-            await api.post('/v1/alunos', {
+            await createMutation.mutateAsync({
                 nome: data.nome.trim(),
                 email: data.email.trim(),
                 serie: data.serie.trim(),
@@ -50,10 +49,10 @@ export default function StudentForm({ onSuccess, onCancel }: StudentFormProps) {
             const error = err as { response?: { data?: { message?: string } } };
             const errorMessage = error.response?.data?.message || 'Erro ao adicionar aluno';
             setGeneralError(errorMessage);
-        } finally {
-            setLoading(false);
         }
     };
+
+    const loading = createMutation.isPending;
 
     return (
         <div className="bg-white p-6 rounded-lg shadow-lg">
