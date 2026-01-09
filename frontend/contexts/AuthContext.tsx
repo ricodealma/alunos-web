@@ -9,6 +9,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
+    register: (name: string, email: string, password: string) => Promise<void>;
     logout: () => void;
 }
 
@@ -35,6 +36,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Update state
         setUser({ email: userEmail, token });
+        setUser({ email: userEmail, token });
+    };
+
+    const register = async (name: string, email: string, password: string) => {
+        const response = await api.post('/auth/register', { name, email, password });
+        // Optionally auto-login or just redirect to login logic
+        // For now, let's just allow the caller to handle next steps (like redirecting)
     };
 
     const logout = () => {
@@ -45,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading: false, login, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading: false, login, register, logout }}>
             {children}
         </AuthContext.Provider>
     );

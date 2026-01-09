@@ -1,7 +1,9 @@
 import axios, { AxiosError } from 'axios';
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+    baseURL: (typeof window === 'undefined'
+        ? process.env.API_INTERNAL_URL
+        : process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:5000/api',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -33,7 +35,9 @@ api.interceptors.response.use(
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('userEmail');
-                window.location.href = '/login';
+                if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+                    window.location.href = '/login';
+                }
             }
         }
         return Promise.reject(error);
