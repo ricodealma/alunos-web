@@ -1,7 +1,18 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState } from 'react';
 import api from '@/services/api';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const studentSchema = z.object({
+    nome: z.string().min(1, 'Nome é obrigatório'),
+    email: z.string().min(1, 'Email é obrigatório').email('Formato de email inválido'),
+    serie: z.string().min(1, 'Série é obrigatória'),
+});
+
+type StudentSchema = z.infer<typeof studentSchema>;
 
 interface StudentFormProps {
     onSuccess: () => void;
@@ -9,63 +20,36 @@ interface StudentFormProps {
 }
 
 export default function StudentForm({ onSuccess, onCancel }: StudentFormProps) {
-    const [nome, setNome] = useState('');
-    const [email, setEmail] = useState('');
-    const [serie, setSerie] = useState('');
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [generalError, setGeneralError] = useState('');
 
-    const validateEmail = (email: string): boolean => {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    };
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm<StudentSchema>({
+        resolver: zodResolver(studentSchema),
+    });
 
-    const validate = (): boolean => {
-        const newErrors: Record<string, string> = {};
-
-        if (!nome.trim()) {
-            newErrors.nome = 'Nome é obrigatório';
-        }
-
-        if (!email.trim()) {
-            newErrors.email = 'Email é obrigatório';
-        } else if (!validateEmail(email)) {
-            newErrors.email = 'Formato de email inválido';
-        }
-
-        if (!serie.trim()) {
-            newErrors.serie = 'Série é obrigatória';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-
-        if (!validate()) {
-            return;
-        }
-
+    const onSubmit = async (data: StudentSchema) => {
         setLoading(true);
-        setErrors({});
+        setGeneralError('');
 
         try {
             await api.post('/v1/alunos', {
-                nome: nome.trim(),
-                email: email.trim(),
-                serie: serie.trim(),
+                nome: data.nome.trim(),
+                email: data.email.trim(),
+                serie: data.serie.trim(),
             });
 
             // Success
-            setNome('');
-            setEmail('');
-            setSerie('');
+            reset();
             onSuccess();
         } catch (err) {
             const error = err as { response?: { data?: { message?: string } } };
             const errorMessage = error.response?.data?.message || 'Erro ao adicionar aluno';
-            setErrors({ general: errorMessage });
+            setGeneralError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -77,7 +61,7 @@ export default function StudentForm({ onSuccess, onCancel }: StudentFormProps) {
                 Adicionar Novo Aluno
             </h3>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
                     <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
                         Nome Completo
@@ -85,14 +69,13 @@ export default function StudentForm({ onSuccess, onCancel }: StudentFormProps) {
                     <input
                         id="nome"
                         type="text"
-                        value={nome}
-                        onChange={(e) => setNome(e.target.value)}
-                        className="input-field"
+                        {...register('nome')}
+                        className={`input-field ${errors.nome ? 'border-red-500 focus:ring-red-500' : ''}`}
                         placeholder="João Silva"
                         disabled={loading}
                     />
                     {errors.nome && (
-                        <p className="text-red-600 text-sm mt-1">{errors.nome}</p>
+                        <p className="text-red-600 text-sm mt-1">{errors.nome.message}</p>
                     )}
                 </div>
 
@@ -103,14 +86,13 @@ export default function StudentForm({ onSuccess, onCancel }: StudentFormProps) {
                     <input
                         id="email"
                         type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="input-field"
+                        {...register('email')}
+                        className={`input-field ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                         placeholder="joao@email.com"
                         disabled={loading}
                     />
                     {errors.email && (
-                        <p className="text-red-600 text-sm mt-1">{errors.email}</p>
+                        <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
                     )}
                 </div>
 
@@ -121,20 +103,19 @@ export default function StudentForm({ onSuccess, onCancel }: StudentFormProps) {
                     <input
                         id="serie"
                         type="text"
-                        value={serie}
-                        onChange={(e) => setSerie(e.target.value)}
-                        className="input-field"
+                        {...register('serie')}
+                        className={`input-field ${errors.serie ? 'border-red-500 focus:ring-red-500' : ''}`}
                         placeholder="5ª série"
                         disabled={loading}
                     />
                     {errors.serie && (
-                        <p className="text-red-600 text-sm mt-1">{errors.serie}</p>
+                        <p className="text-red-600 text-sm mt-1">{errors.serie.message}</p>
                     )}
                 </div>
 
-                {errors.general && (
+                {generalError && (
                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                        {errors.general}
+                        {generalError}
                     </div>
                 )}
 

@@ -1,53 +1,46 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const registerSchema = z.object({
+    name: z.string().min(1, 'Nome é obrigatório'),
+    email: z.string().min(1, 'Email é obrigatório').email('Formato de email inválido'),
+    password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
+    confirmPassword: z.string().min(1, 'Confirmação de senha é obrigatória'),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: 'As senhas não coincidem',
+    path: ['confirmPassword'],
+});
+
+type RegisterSchema = z.infer<typeof registerSchema>;
 
 export default function RegisterForm() {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { register } = useAuth();
+    const { register: authRegister } = useAuth();
     const router = useRouter();
 
-    const validateEmail = (email: string): boolean => {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    };
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<RegisterSchema>({
+        resolver: zodResolver(registerSchema),
+    });
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (data: RegisterSchema) => {
         setError('');
-
-        // Validation
-        if (!name || !email || !password || !confirmPassword) {
-            setError('Por favor, preencha todos os campos');
-            return;
-        }
-
-        if (!validateEmail(email)) {
-            setError('Formato de email inválido');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            setError('As senhas não coincidem');
-            return;
-        }
-
-        if (password.length < 6) {
-            setError('A senha deve ter pelo menos 6 caracteres');
-            return;
-        }
-
         setLoading(true);
 
         try {
-            await register(name, email, password);
+            console.log(data)
+            await authRegister(data.name, data.email, data.password);
             router.push('/login');
         } catch (err: unknown) {
             const errorMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao criar conta';
@@ -58,7 +51,7 @@ export default function RegisterForm() {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                     Nome
@@ -66,12 +59,14 @@ export default function RegisterForm() {
                 <input
                     id="name"
                     type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="input-field"
+                    {...register('name')}
+                    className={`input-field ${errors.name ? 'border-red-500 focus:ring-red-500' : ''}`}
                     placeholder="Seu nome"
                     disabled={loading}
                 />
+                {errors.name && (
+                    <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
+                )}
             </div>
 
             <div>
@@ -81,12 +76,14 @@ export default function RegisterForm() {
                 <input
                     id="email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="input-field"
+                    {...register('email')}
+                    className={`input-field ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                     placeholder="seu@email.com"
                     disabled={loading}
                 />
+                {errors.email && (
+                    <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
+                )}
             </div>
 
             <div>
@@ -96,12 +93,14 @@ export default function RegisterForm() {
                 <input
                     id="password"
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="input-field"
+                    {...register('password')}
+                    className={`input-field ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
                     placeholder="••••••••"
                     disabled={loading}
                 />
+                {errors.password && (
+                    <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>
+                )}
             </div>
 
             <div>
@@ -111,12 +110,14 @@ export default function RegisterForm() {
                 <input
                     id="confirmPassword"
                     type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="input-field"
+                    {...register('confirmPassword')}
+                    className={`input-field ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : ''}`}
                     placeholder="••••••••"
                     disabled={loading}
                 />
+                {errors.confirmPassword && (
+                    <p className="text-red-600 text-sm mt-1">{errors.confirmPassword.message}</p>
+                )}
             </div>
 
             {error && (

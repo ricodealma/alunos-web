@@ -1,41 +1,40 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const loginSchema = z.object({
+    email: z.string().min(1, 'Email é obrigatório').email('Formato de email inválido'),
+    password: z.string().min(1, 'Senha é obrigatória'),
+});
+
+type LoginSchema = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const router = useRouter();
 
-    const validateEmail = (email: string): boolean => {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    };
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<LoginSchema>({
+        resolver: zodResolver(loginSchema),
+    });
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (data: LoginSchema) => {
         setError('');
-
-        // Validation
-        if (!email || !password) {
-            setError('Por favor, preencha todos os campos');
-            return;
-        }
-
-        if (!validateEmail(email)) {
-            setError('Formato de email inválido');
-            return;
-        }
-
         setLoading(true);
 
         try {
-            await login(email, password);
+            await login(data.email, data.password);
             router.push('/students');
         } catch (err: unknown) {
             const errorMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Credenciais inválidas';
@@ -46,7 +45,7 @@ export default function LoginForm() {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email
@@ -54,12 +53,14 @@ export default function LoginForm() {
                 <input
                     id="email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="input-field"
+                    {...register('email')}
+                    className={`input-field ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                     placeholder="seu@email.com"
                     disabled={loading}
                 />
+                {errors.email && (
+                    <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
+                )}
             </div>
 
             <div>
@@ -69,12 +70,14 @@ export default function LoginForm() {
                 <input
                     id="password"
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="input-field"
+                    {...register('password')}
+                    className={`input-field ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
                     placeholder="••••••••"
                     disabled={loading}
                 />
+                {errors.password && (
+                    <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>
+                )}
             </div>
 
             {error && (
