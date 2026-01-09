@@ -8,8 +8,10 @@ import StudentList from '@/components/StudentList';
 import StudentForm from '@/components/StudentForm';
 import DeleteConfirmation from '@/components/DeleteConfirmation';
 import Pagination from '@/components/Pagination';
-import LoadingSpinner from '@/components/LoadingSpinner';
 import { useStudents, useDeleteStudent } from '@/hooks/useStudents';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+
 
 export default function StudentsPage() {
     const router = useRouter();
@@ -90,7 +92,7 @@ export default function StudentsPage() {
     if (authLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <LoadingSpinner />
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
         );
     }
@@ -116,12 +118,12 @@ export default function StudentsPage() {
                                 Logado como: {user?.email}
                             </p>
                         </div>
-                        <button
+                        <Button
                             onClick={logout}
-                            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                            variant="destructive"
                         >
                             Sair
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </header>
@@ -151,12 +153,12 @@ export default function StudentsPage() {
                         <h2 className="text-xl font-semibold text-gray-900">
                             Lista de Alunos
                         </h2>
-                        <button
+                        <Button
                             onClick={() => setShowAddForm(!showAddForm)}
-                            className="btn-primary"
+                            variant={showAddForm ? "outline" : "default"}
                         >
                             {showAddForm ? '✕ Cancelar' : '+ Adicionar Aluno'}
-                        </button>
+                        </Button>
                     </div>
 
                     {(error || fetchError) && (

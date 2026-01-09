@@ -1,3 +1,14 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 interface DeleteConfirmationProps {
     isOpen: boolean;
     studentName: string;
@@ -13,36 +24,32 @@ export default function DeleteConfirmation({
     onCancel,
     loading,
 }: DeleteConfirmationProps) {
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Confirmar Exclusão
-                </h3>
-                <p className="text-gray-600 mb-6">
-                    Tem certeza que deseja excluir o aluno <strong>{studentName}</strong>?
-                    Esta ação não pode ser desfeita.
-                </p>
-
-                <div className="flex gap-3">
-                    <button
-                        onClick={onCancel}
-                        className="btn-secondary flex-1"
-                        disabled={loading}
-                    >
+        <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Tem certeza que deseja excluir o aluno <strong>{studentName}</strong>?
+                        Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={onCancel} disabled={loading}>
                         Cancelar
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        className="btn-danger flex-1 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={(e) => {
+                            e.preventDefault();
+                            onConfirm();
+                        }}
                         disabled={loading}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                        {loading ? 'Excluindo...' : 'Excluir'}
-                    </button>
-                </div>
-            </div>
-        </div>
+                        {loading ? "Excluindo..." : "Excluir"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 }

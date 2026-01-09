@@ -7,6 +7,17 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Button } from "@/components/ui/button";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
 
 const registerSchema = z.object({
     name: z.string().min(1, 'Nome é obrigatório'),
@@ -21,135 +32,123 @@ const registerSchema = z.object({
 type RegisterSchema = z.infer<typeof registerSchema>;
 
 export default function RegisterForm() {
-    const [error, setError] = useState('');
+    const [submitError, setSubmitError] = useState('');
     const [loading, setLoading] = useState(false);
     const { register: authRegister } = useAuth();
     const router = useRouter();
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-    } = useForm<RegisterSchema>({
+    const form = useForm<RegisterSchema>({
         resolver: zodResolver(registerSchema),
+        defaultValues: {
+            name: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+        },
     });
 
     const onSubmit = async (data: RegisterSchema) => {
-        setError('');
+        setSubmitError('');
         setLoading(true);
 
         try {
-            console.log(data)
             await authRegister(data.name, data.email, data.password);
             router.push('/login');
         } catch (err: unknown) {
             const errorMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao criar conta';
-            setError(errorMessage);
+            setSubmitError(errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Nome
-                </label>
-                <input
-                    id="name"
-                    type="text"
-                    {...register('name')}
-                    className={`input-field ${errors.name ? 'border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="Seu nome"
-                    disabled={loading}
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Nome</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Seu nome" {...field} disabled={loading} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-                {errors.name && (
-                    <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
-                )}
-            </div>
 
-            <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                </label>
-                <input
-                    id="email"
-                    type="email"
-                    {...register('email')}
-                    className={`input-field ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="seu@email.com"
-                    disabled={loading}
+                <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                                <Input placeholder="seu@email.com" {...field} disabled={loading} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-                {errors.email && (
-                    <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
-                )}
-            </div>
 
-            <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                    Senha
-                </label>
-                <input
-                    id="password"
-                    type="password"
-                    {...register('password')}
-                    className={`input-field ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="••••••••"
-                    disabled={loading}
+                <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Senha</FormLabel>
+                            <FormControl>
+                                <Input type="password" placeholder="••••••••" {...field} disabled={loading} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-                {errors.password && (
-                    <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>
-                )}
-            </div>
 
-            <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                    Confirmar Senha
-                </label>
-                <input
-                    id="confirmPassword"
-                    type="password"
-                    {...register('confirmPassword')}
-                    className={`input-field ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="••••••••"
-                    disabled={loading}
+                <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Confirmar Senha</FormLabel>
+                            <FormControl>
+                                <Input type="password" placeholder="••••••••" {...field} disabled={loading} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-                {errors.confirmPassword && (
-                    <p className="text-red-600 text-sm mt-1">{errors.confirmPassword.message}</p>
-                )}
-            </div>
 
-            {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                    {error}
+                {submitError && (
+                    <div className="bg-destructive/15 border border-destructive/50 text-destructive px-4 py-3 rounded text-sm font-medium">
+                        {submitError}
+                    </div>
+                )}
+
+                <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Criando conta...
+                        </>
+                    ) : (
+                        'Cadastrar'
+                    )}
+                </Button>
+
+                <div className="text-center text-sm text-muted-foreground">
+                    Já tem uma conta?{' '}
+                    <Link href="/login" className="font-medium text-primary hover:underline">
+                        Faça login
+                    </Link>
                 </div>
-            )}
-
-            <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-                {loading ? (
-                    <span className="flex items-center justify-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Criando conta...
-                    </span>
-                ) : (
-                    'Cadastrar'
-                )}
-            </button>
-
-            <div className="text-center text-sm text-gray-600">
-                Já tem uma conta?{' '}
-                <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-                    Faça login
-                </Link>
-            </div>
-        </form>
+            </form>
+        </Form>
     );
 }

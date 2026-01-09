@@ -7,6 +7,17 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Button } from "@/components/ui/button";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
     email: z.string().min(1, 'Email é obrigatório').email('Formato de email inválido'),
@@ -16,21 +27,21 @@ const loginSchema = z.object({
 type LoginSchema = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
-    const [error, setError] = useState('');
+    const [submitError, setSubmitError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const router = useRouter();
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-    } = useForm<LoginSchema>({
+    const form = useForm<LoginSchema>({
         resolver: zodResolver(loginSchema),
+        defaultValues: {
+            email: "",
+            password: "",
+        },
     });
 
     const onSubmit = async (data: LoginSchema) => {
-        setError('');
+        setSubmitError('');
         setLoading(true);
 
         try {
@@ -38,78 +49,71 @@ export default function LoginForm() {
             router.push('/students');
         } catch (err: unknown) {
             const errorMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Credenciais inválidas';
-            setError(errorMessage);
+            setSubmitError(errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                </label>
-                <input
-                    id="email"
-                    type="email"
-                    {...register('email')}
-                    className={`input-field ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="seu@email.com"
-                    disabled={loading}
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                                <Input placeholder="seu@email.com" {...field} disabled={loading} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-                {errors.email && (
-                    <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
-                )}
-            </div>
 
-            <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                    Senha
-                </label>
-                <input
-                    id="password"
-                    type="password"
-                    {...register('password')}
-                    className={`input-field ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="••••••••"
-                    disabled={loading}
+                <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Senha</FormLabel>
+                            <FormControl>
+                                <Input type="password" placeholder="••••••••" {...field} disabled={loading} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-                {errors.password && (
-                    <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>
-                )}
-            </div>
 
-            {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                    {error}
+                {submitError && (
+                    <div className="bg-destructive/15 border border-destructive/50 text-destructive px-4 py-3 rounded text-sm font-medium">
+                        {submitError}
+                    </div>
+                )}
+
+                <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Entrando...
+                        </>
+                    ) : (
+                        'Entrar'
+                    )}
+                </Button>
+
+                <div className="text-center text-sm text-muted-foreground">
+                    Não tem uma conta?{' '}
+                    <Link href="/register" className="font-medium text-primary hover:underline">
+                        Cadastre-se
+                    </Link>
                 </div>
-            )}
-
-            <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-                {loading ? (
-                    <span className="flex items-center justify-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Entrando...
-                    </span>
-                ) : (
-                    'Entrar'
-                )}
-            </button>
-
-            <div className="text-center text-sm text-gray-600">
-                Não tem uma conta?{' '}
-                <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-                    Cadastre-se
-                </Link>
-            </div>
-        </form>
+            </form>
+        </Form>
     );
 }

@@ -1,3 +1,12 @@
+import {
+    Pagination as ShadcnPagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
+
 interface PaginationProps {
     currentPage: number;
     totalPages: number;
@@ -6,26 +15,34 @@ interface PaginationProps {
 
 export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
     return (
-        <div className="flex items-center justify-center gap-4 mt-6">
-            <button
-                onClick={() => onPageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                ← Anterior
-            </button>
+        <ShadcnPagination className="mt-6">
+            <PaginationContent>
+                <PaginationItem>
+                    <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage > 1) onPageChange(currentPage - 1);
+                        }}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                </PaginationItem>
 
-            <span className="text-gray-700">
-                Página {currentPage} de {totalPages}
-            </span>
+                <PaginationItem className="flex items-center px-4 text-sm text-gray-700">
+                    Página {currentPage} de {totalPages}
+                </PaginationItem>
 
-            <button
-                onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                Próxima →
-            </button>
-        </div>
+                <PaginationItem>
+                    <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage < totalPages) onPageChange(currentPage + 1);
+                        }}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                </PaginationItem>
+            </PaginationContent>
+        </ShadcnPagination>
     );
 }

@@ -12,22 +12,62 @@
   --muted: #A39891;
   --danger: #DC3545;
   --danger-hover: #BB2D3B;
+
+  /* Shadcn variables */
+  --card: #FFFFFF;
+  --card-foreground: #212529;
+  --popover: #FFFFFF;
+  --popover-foreground: #212529;
+  --primary-foreground: #FFFFFF;
+  --secondary-foreground: #4D268C;
+  --muted-foreground: #A39891;
+  --accent-foreground: #FFFFFF;
+  --destructive: #DC3545;
+  --destructive-foreground: #FFFFFF;
+  --border: #EDE6E2;
+  --input: #EDE6E2;
+  --ring: #4D268C;
+  --radius: 0.5rem;
 }
 
 @theme inline {
+  --font-sans: var(--font-roboto), ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-background: var(--background);
+  --color-background-alt: var(--background-alt);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-hover: var(--secondary-hover);
-  --color-accent: var(--accent);
-  --color-background-alt: var(--background-alt);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
 }
 
 @layer components {
@@ -40,7 +80,7 @@ body {
   }
 
   .btn-danger {
-    @apply bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors duration-200;
+    @apply bg-danger hover:bg-danger-hover text-white font-semibold py-2 px-4 rounded transition-colors duration-200 shadow-sm flex items-center justify-center gap-2;
   }
 
   .input-field {
